@@ -3,7 +3,7 @@
     "description": "A comprehensive ticketing and messaging system for Laravel applications",
     "keywords": ["laravel", "ticket", "chat", "support", "helpdesk", "messaging"],
     "license": "MIT",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "authors": [
         {
             "name": "Karnoweb",
@@ -12,13 +12,13 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/support": "^10.0|^11.0",
-        "illuminate/database": "^10.0|^11.0",
-        "illuminate/broadcasting": "^10.0|^11.0",
-        "illuminate/notifications": "^10.0|^11.0"
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/database": "^10.0|^11.0|^12.0",
+        "illuminate/broadcasting": "^10.0|^11.0|^12.0",
+        "illuminate/notifications": "^10.0|^11.0|^12.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.0|^9.0",
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
         "pestphp/pest": "^2.0",
         "phpstan/phpstan": "^1.10",
         "laravel/pint": "^1.0"
