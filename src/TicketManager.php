@@ -7,6 +7,7 @@ use Karnoweb\TicketChat\Models\Message;
 use Karnoweb\TicketChat\Contracts\ConversationServiceInterface;
 use Karnoweb\TicketChat\Contracts\MessageServiceInterface;
 use Karnoweb\TicketChat\Enums\ConversationType;
+use Karnoweb\TicketChat\Support\BranchResolver;
 
 class TicketManager
 {
@@ -72,11 +73,15 @@ class TicketManager
 
     public function unreadCount(int $userId, ?Conversation $conversation = null, ?int $branchId = null): int
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return $this->messageService->getUnreadCount($userId, $conversation, $branchId);
     }
 
     public function forUser(int $userId, ?int $branchId = null)
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return Conversation::tickets()
             ->forUser($userId)
             ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
@@ -86,6 +91,8 @@ class TicketManager
 
     public function forAgent(int $agentId, ?int $branchId = null)
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return Conversation::tickets()
             ->where('assigned_to', $agentId)
             ->open()
@@ -96,6 +103,8 @@ class TicketManager
 
     public function forDepartment(int $departmentId, ?int $branchId = null)
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return Conversation::tickets()
             ->byDepartment($departmentId)
             ->open()
@@ -111,6 +120,8 @@ class TicketManager
 
     public function findByTicketNumber(string $ticketNumber, ?int $branchId = null): ?Conversation
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         $query = Conversation::where('ticket_number', $ticketNumber);
         if ($branchId !== null) {
             $column = config('ticket-chat.general.branch_column', 'branch_id');

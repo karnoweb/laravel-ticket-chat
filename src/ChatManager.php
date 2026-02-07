@@ -8,6 +8,7 @@ use Karnoweb\TicketChat\Contracts\ConversationServiceInterface;
 use Karnoweb\TicketChat\Contracts\MessageServiceInterface;
 use Karnoweb\TicketChat\Events\TypingIndicator;
 use Karnoweb\TicketChat\Enums\ConversationType;
+use Karnoweb\TicketChat\Support\BranchResolver;
 
 class ChatManager
 {
@@ -18,16 +19,22 @@ class ChatManager
 
     public function directTo(int $fromUserId, int $toUserId, ?string $message = null, ?int $branchId = null): Conversation
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return $this->conversationService->createDirect($fromUserId, $toUserId, $message, $branchId);
     }
 
     public function createGroup(string $title, array $memberIds, int $createdBy, ?int $branchId = null): Conversation
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return $this->conversationService->createGroup($title, $memberIds, $createdBy, $branchId);
     }
 
     public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return $this->conversationService->createChannel($title, $createdBy, $branchId);
     }
 
@@ -48,6 +55,8 @@ class ChatManager
 
     public function unreadCount(int $userId, ?Conversation $conversation = null, ?int $branchId = null): int
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return $this->messageService->getUnreadCount($userId, $conversation, $branchId);
     }
 
@@ -81,6 +90,8 @@ class ChatManager
 
     public function getConversationsForUser(int $userId, ?int $branchId = null)
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return Conversation::forUser($userId)
             ->whereIn('type', [ConversationType::DIRECT, ConversationType::GROUP])
             ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
@@ -90,6 +101,8 @@ class ChatManager
 
     public function getChannelsForUser(int $userId, ?int $branchId = null)
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return Conversation::forUser($userId)
             ->where('type', ConversationType::CHANNEL)
             ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))

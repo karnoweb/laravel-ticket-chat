@@ -13,6 +13,7 @@ use Karnoweb\TicketChat\Events\ConversationCreated;
 use Karnoweb\TicketChat\Events\ConversationClosed;
 use Karnoweb\TicketChat\Events\ConversationAssigned;
 use Karnoweb\TicketChat\Exceptions\InvalidStatusTransitionException;
+use Karnoweb\TicketChat\Support\BranchResolver;
 use Illuminate\Support\Facades\DB;
 
 class ConversationService implements ConversationServiceInterface
@@ -29,8 +30,9 @@ class ConversationService implements ConversationServiceInterface
             $conversation->priority = $data['priority'] ?? config('ticket-chat.tickets.default_priority');
             $conversation->department_id = $data['department_id'] ?? null;
             $branchColumn = config('ticket-chat.general.branch_column', 'branch_id');
-            if (array_key_exists('branch_id', $data)) {
-                $conversation->setAttribute($branchColumn, $data['branch_id']);
+            $branchId = array_key_exists('branch_id', $data) ? $data['branch_id'] : BranchResolver::resolve(null);
+            if ($branchId !== null) {
+                $conversation->setAttribute($branchColumn, $branchId);
             }
             $conversation->created_by = $data['created_by'];
             $conversation->meta = $data['meta'] ?? null;
@@ -56,6 +58,8 @@ class ConversationService implements ConversationServiceInterface
 
     public function createDirect(int $fromUserId, int $toUserId, ?string $message = null, ?int $branchId = null): Conversation
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return DB::transaction(function () use ($fromUserId, $toUserId, $message, $branchId) {
             $branchColumn = config('ticket-chat.general.branch_column', 'branch_id');
             $existing = Conversation::where('type', ConversationType::DIRECT)
@@ -94,6 +98,8 @@ class ConversationService implements ConversationServiceInterface
 
     public function createGroup(string $title, array $userIds, int $createdBy, ?int $branchId = null): Conversation
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         return DB::transaction(function () use ($title, $userIds, $createdBy, $branchId) {
             $payload = [
                 'type' => ConversationType::GROUP,
@@ -127,6 +133,8 @@ class ConversationService implements ConversationServiceInterface
 
     public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation
     {
+        $branchId = BranchResolver::resolve($branchId);
+
         $payload = [
             'type' => ConversationType::CHANNEL,
             'title' => $title,

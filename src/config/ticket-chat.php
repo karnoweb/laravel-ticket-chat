@@ -7,6 +7,7 @@ return [
         'database_connection' => env('TICKET_CHAT_DB_CONNECTION', null),
         'route_prefix' => null,
         'branch_column' => 'branch_id',
+        'default_branch_id' => env('TICKET_CHAT_DEFAULT_BRANCH_ID') ? (int) env('TICKET_CHAT_DEFAULT_BRANCH_ID') : null,
     ],
 
     'features' => [

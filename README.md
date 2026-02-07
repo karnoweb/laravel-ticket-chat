@@ -89,6 +89,8 @@ When `features.multi_branch` is enabled, you can scope tickets and conversations
 
 If `branch_id` / `$branchId` is omitted, behaviour is unchanged (all data).
 
+**Default branch:** When `general.default_branch_id` is set (e.g. via `TICKET_CHAT_DEFAULT_BRANCH_ID`), all creates and reads use that branch automatically when no branch is passed. Set it in `config/ticket-chat.php` or your `.env` to always scope to one branch without passing `$branchId` everywhere.
+
 ### Reply to a ticket
 
 ```php

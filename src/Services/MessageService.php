@@ -11,6 +11,7 @@ use Karnoweb\TicketChat\Events\MessageRead;
 use Karnoweb\TicketChat\Exceptions\ConversationLockedException;
 use Karnoweb\TicketChat\Exceptions\MessageEditExpiredException;
 use Karnoweb\TicketChat\Exceptions\RateLimitExceededException;
+use Karnoweb\TicketChat\Support\BranchResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -134,6 +135,8 @@ class MessageService implements MessageServiceInterface
         if ($conversation) {
             return $conversation->unreadCountForUser($userId);
         }
+
+        $branchId = BranchResolver::resolve($branchId);
 
         $prefix = config('ticket-chat.general.table_prefix', 'tc_');
         $branchColumn = config('ticket-chat.general.branch_column', 'branch_id');
