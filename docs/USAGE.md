@@ -325,6 +325,16 @@ $ticket = Ticket::create([
 ]);
 ```
 
+### پشتیبانی چند شعبه (v2)
+
+با فعال بودن `features.multi_branch` می‌توانید تیکت‌ها و گفتگوها را بر اساس شعبه محدود کنید:
+
+- **ایجاد:** در آرایه داده تیکت کلید `branch_id` بگذارید؛ یا برای `Chat::directTo()`، `Chat::createGroup()` و `Chat::createChannel()` آرگومان آخر اختیاری `$branchId` را ارسال کنید.
+- **لیست‌گیری:** پارامتر اختیاری `$branchId` در `Ticket::forUser()`، `Ticket::forAgent()`، `Ticket::forDepartment()`، `Ticket::findByTicketNumber()`، `Chat::getConversationsForUser()` و `Chat::getChannelsForUser()`.
+- **تعداد خوانده‌نشده:** `Ticket::unreadCount($userId, null, $branchId)` و `Chat::unreadCount($userId, null, $branchId)` فقط گفتگوهای همان شعبه را شمارش می‌کنند.
+
+در صورت عدم ارسال `branch_id` یا `$branchId`، رفتار مانند قبل است (همه داده‌ها).
+
 ### چرخه حیات تیکت
 
 ```

@@ -70,33 +70,36 @@ class TicketManager
         return $this->conversationService->unlock($conversation);
     }
 
-    public function unreadCount(int $userId): int
+    public function unreadCount(int $userId, ?Conversation $conversation = null, ?int $branchId = null): int
     {
-        return $this->messageService->getUnreadCount($userId);
+        return $this->messageService->getUnreadCount($userId, $conversation, $branchId);
     }
 
-    public function forUser(int $userId)
+    public function forUser(int $userId, ?int $branchId = null)
     {
         return Conversation::tickets()
             ->forUser($userId)
+            ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
             ->latest('last_message_at')
             ->get();
     }
 
-    public function forAgent(int $agentId)
+    public function forAgent(int $agentId, ?int $branchId = null)
     {
         return Conversation::tickets()
             ->where('assigned_to', $agentId)
             ->open()
+            ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
             ->latest('last_message_at')
             ->get();
     }
 
-    public function forDepartment(int $departmentId)
+    public function forDepartment(int $departmentId, ?int $branchId = null)
     {
         return Conversation::tickets()
             ->byDepartment($departmentId)
             ->open()
+            ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
             ->latest('last_message_at')
             ->get();
     }
@@ -106,8 +109,14 @@ class TicketManager
         return Conversation::find($id);
     }
 
-    public function findByTicketNumber(string $ticketNumber): ?Conversation
+    public function findByTicketNumber(string $ticketNumber, ?int $branchId = null): ?Conversation
     {
-        return Conversation::where('ticket_number', $ticketNumber)->first();
+        $query = Conversation::where('ticket_number', $ticketNumber);
+        if ($branchId !== null) {
+            $column = config('ticket-chat.general.branch_column', 'branch_id');
+            $query->where($column, $branchId);
+        }
+
+        return $query->first();
     }
 }

@@ -6,6 +6,7 @@ return [
         'table_prefix' => env('TICKET_CHAT_TABLE_PREFIX', 'tc_'),
         'database_connection' => env('TICKET_CHAT_DB_CONNECTION', null),
         'route_prefix' => null,
+        'branch_column' => 'branch_id',
     ],
 
     'features' => [
@@ -13,6 +14,7 @@ return [
         'groups' => true,
         'channels' => true,
         'departments' => true,
+        'multi_branch' => true,
         'file_uploads' => true,
         'canned_responses' => true,
         'internal_notes' => true,

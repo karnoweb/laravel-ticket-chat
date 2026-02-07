@@ -8,11 +8,11 @@ interface ConversationServiceInterface
 {
     public function createTicket(array $data): Conversation;
 
-    public function createDirect(int $fromUserId, int $toUserId, ?string $message = null): Conversation;
+    public function createDirect(int $fromUserId, int $toUserId, ?string $message = null, ?int $branchId = null): Conversation;
 
-    public function createGroup(string $title, array $userIds, int $createdBy): Conversation;
+    public function createGroup(string $title, array $userIds, int $createdBy, ?int $branchId = null): Conversation;
 
-    public function createChannel(string $title, int $createdBy): Conversation;
+    public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation;
 
     public function close(Conversation $conversation, ?int $closedBy = null): bool;
 

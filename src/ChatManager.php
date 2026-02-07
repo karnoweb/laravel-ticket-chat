@@ -16,19 +16,19 @@ class ChatManager
         protected MessageServiceInterface $messageService
     ) {}
 
-    public function directTo(int $fromUserId, int $toUserId, ?string $message = null): Conversation
+    public function directTo(int $fromUserId, int $toUserId, ?string $message = null, ?int $branchId = null): Conversation
     {
-        return $this->conversationService->createDirect($fromUserId, $toUserId, $message);
+        return $this->conversationService->createDirect($fromUserId, $toUserId, $message, $branchId);
     }
 
-    public function createGroup(string $title, array $memberIds, int $createdBy): Conversation
+    public function createGroup(string $title, array $memberIds, int $createdBy, ?int $branchId = null): Conversation
     {
-        return $this->conversationService->createGroup($title, $memberIds, $createdBy);
+        return $this->conversationService->createGroup($title, $memberIds, $createdBy, $branchId);
     }
 
-    public function createChannel(string $title, int $createdBy): Conversation
+    public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation
     {
-        return $this->conversationService->createChannel($title, $createdBy);
+        return $this->conversationService->createChannel($title, $createdBy, $branchId);
     }
 
     public function sendMessage(Conversation $conversation, int $userId, string $body, array $options = []): Message
@@ -46,9 +46,9 @@ class ChatManager
         event(new TypingIndicator($conversation, $userId, $isTyping));
     }
 
-    public function unreadCount(int $userId, ?Conversation $conversation = null): int
+    public function unreadCount(int $userId, ?Conversation $conversation = null, ?int $branchId = null): int
     {
-        return $this->messageService->getUnreadCount($userId, $conversation);
+        return $this->messageService->getUnreadCount($userId, $conversation, $branchId);
     }
 
     public function addParticipant(Conversation $conversation, int $userId, string $role = 'member'): bool
@@ -79,18 +79,20 @@ class ChatManager
         return $this->removeParticipant($conversation, $userId);
     }
 
-    public function getConversationsForUser(int $userId)
+    public function getConversationsForUser(int $userId, ?int $branchId = null)
     {
         return Conversation::forUser($userId)
             ->whereIn('type', [ConversationType::DIRECT, ConversationType::GROUP])
+            ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
             ->latest('last_message_at')
             ->get();
     }
 
-    public function getChannelsForUser(int $userId)
+    public function getChannelsForUser(int $userId, ?int $branchId = null)
     {
         return Conversation::forUser($userId)
             ->where('type', ConversationType::CHANNEL)
+            ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
             ->get();
     }
 }

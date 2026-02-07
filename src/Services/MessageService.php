@@ -129,16 +129,18 @@ class MessageService implements MessageServiceInterface
         }
     }
 
-    public function getUnreadCount(int $userId, ?Conversation $conversation = null): int
+    public function getUnreadCount(int $userId, ?Conversation $conversation = null, ?int $branchId = null): int
     {
         if ($conversation) {
             return $conversation->unreadCountForUser($userId);
         }
 
         $prefix = config('ticket-chat.general.table_prefix', 'tc_');
+        $branchColumn = config('ticket-chat.general.branch_column', 'branch_id');
 
-        return (int) DB::table($prefix.'messages as m')
+        $query = DB::table($prefix.'messages as m')
             ->join($prefix.'conversation_participants as cp', 'm.conversation_id', '=', 'cp.conversation_id')
+            ->join($prefix.'conversations as c', 'm.conversation_id', '=', 'c.id')
             ->leftJoin($prefix.'message_reads as mr', function ($join) use ($userId) {
                 $join->on('m.id', '=', 'mr.message_id')
                     ->where('mr.user_id', '=', $userId);
@@ -146,8 +148,13 @@ class MessageService implements MessageServiceInterface
             ->where('cp.user_id', $userId)
             ->where('m.user_id', '!=', $userId)
             ->whereNull('mr.id')
-            ->whereNull('m.deleted_at')
-            ->count();
+            ->whereNull('m.deleted_at');
+
+        if ($branchId !== null) {
+            $query->where('c.'.$branchColumn, $branchId);
+        }
+
+        return (int) $query->count();
     }
 
     protected function validateCanSend(Conversation $conversation, int $userId): void

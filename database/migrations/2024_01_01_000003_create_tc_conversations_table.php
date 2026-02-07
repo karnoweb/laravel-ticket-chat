@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('status')->default('open');
             $table->string('priority')->default('medium');
             $table->foreignId('department_id')->nullable()->constrained($prefix.'departments')->nullOnDelete();
+            $table->unsignedBigInteger('branch_id')->nullable();
             $table->unsignedBigInteger('assigned_to')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamp('first_response_at')->nullable();
@@ -33,6 +34,8 @@ return new class extends Migration
 
             $table->index(['type', 'status']);
             $table->index('department_id');
+            $table->index('branch_id');
+            $table->index(['branch_id', 'type', 'status']);
             $table->index('assigned_to');
             $table->index('created_by');
             $table->index('last_message_at');

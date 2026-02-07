@@ -16,12 +16,12 @@ use Illuminate\Support\Facades\Facade;
  * @method static bool changePriority(\Karnoweb\TicketChat\Models\Conversation $conversation, string $priority)
  * @method static bool lock(\Karnoweb\TicketChat\Models\Conversation $conversation)
  * @method static bool unlock(\Karnoweb\TicketChat\Models\Conversation $conversation)
- * @method static int unreadCount(int $userId)
- * @method static \Illuminate\Support\Collection forUser(int $userId)
- * @method static \Illuminate\Support\Collection forAgent(int $agentId)
- * @method static \Illuminate\Support\Collection forDepartment(int $departmentId)
+ * @method static int unreadCount(int $userId, ?\Karnoweb\TicketChat\Models\Conversation $conversation = null, ?int $branchId = null)
+ * @method static \Illuminate\Support\Collection forUser(int $userId, ?int $branchId = null)
+ * @method static \Illuminate\Support\Collection forAgent(int $agentId, ?int $branchId = null)
+ * @method static \Illuminate\Support\Collection forDepartment(int $departmentId, ?int $branchId = null)
  * @method static \Karnoweb\TicketChat\Models\Conversation|null find(int $id)
- * @method static \Karnoweb\TicketChat\Models\Conversation|null findByTicketNumber(string $ticketNumber)
+ * @method static \Karnoweb\TicketChat\Models\Conversation|null findByTicketNumber(string $ticketNumber, ?int $branchId = null)
  *
  * @see \Karnoweb\TicketChat\TicketManager
  */

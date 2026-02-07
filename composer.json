@@ -3,7 +3,7 @@
     "description": "A comprehensive ticketing and messaging system for Laravel applications",
     "keywords": ["laravel", "ticket", "chat", "support", "helpdesk", "messaging"],
     "license": "MIT",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "authors": [
         {
             "name": "Karnoweb",

@@ -75,8 +75,19 @@ $ticket = Ticket::create([
     'created_by' => auth()->id(),
     'department_id' => 1,
     'priority' => 'high',
+    'branch_id' => 1,  // optional (v2 multi-branch)
 ]);
 ```
+
+### Multi-branch support (v2)
+
+When `features.multi_branch` is enabled, you can scope tickets and conversations by branch:
+
+- **Creating:** Pass `branch_id` in the ticket data array, or as the last argument to `Chat::directTo()`, `Chat::createGroup()`, and `Chat::createChannel()`.
+- **Listing:** Use the optional `$branchId` parameter on `Ticket::forUser()`, `Ticket::forAgent()`, `Ticket::forDepartment()`, `Ticket::findByTicketNumber()`, `Chat::getConversationsForUser()`, and `Chat::getChannelsForUser()`.
+- **Unread count:** `Ticket::unreadCount($userId, null, $branchId)` and `Chat::unreadCount($userId, null, $branchId)` restrict the count to conversations in that branch.
+
+If `branch_id` / `$branchId` is omitted, behaviour is unchanged (all data).
 
 ### Reply to a ticket
 

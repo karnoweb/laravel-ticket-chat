@@ -21,5 +21,5 @@ interface MessageServiceInterface
 
     public function markConversationAsRead(Conversation $conversation, int $userId): void;
 
-    public function getUnreadCount(int $userId, ?Conversation $conversation = null): int;
+    public function getUnreadCount(int $userId, ?Conversation $conversation = null, ?int $branchId = null): int;
 }

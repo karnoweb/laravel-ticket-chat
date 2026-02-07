@@ -126,6 +126,17 @@ class Conversation extends Model
         return $query->where('status', $status);
     }
 
+    public function scopeByBranch($query, $branchId)
+    {
+        if ($branchId === null) {
+            return $query;
+        }
+
+        $column = config('ticket-chat.general.branch_column', 'branch_id');
+
+        return $query->where($column, $branchId);
+    }
+
     public function isTicket(): bool
     {
         return $this->type === ConversationType::TICKET;

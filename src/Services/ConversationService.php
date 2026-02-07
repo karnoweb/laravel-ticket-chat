@@ -28,6 +28,10 @@ class ConversationService implements ConversationServiceInterface
             $conversation->status = $data['status'] ?? config('ticket-chat.tickets.default_status');
             $conversation->priority = $data['priority'] ?? config('ticket-chat.tickets.default_priority');
             $conversation->department_id = $data['department_id'] ?? null;
+            $branchColumn = config('ticket-chat.general.branch_column', 'branch_id');
+            if (array_key_exists('branch_id', $data)) {
+                $conversation->setAttribute($branchColumn, $data['branch_id']);
+            }
             $conversation->created_by = $data['created_by'];
             $conversation->meta = $data['meta'] ?? null;
             $conversation->save();
@@ -50,22 +54,28 @@ class ConversationService implements ConversationServiceInterface
         });
     }
 
-    public function createDirect(int $fromUserId, int $toUserId, ?string $message = null): Conversation
+    public function createDirect(int $fromUserId, int $toUserId, ?string $message = null, ?int $branchId = null): Conversation
     {
-        return DB::transaction(function () use ($fromUserId, $toUserId, $message) {
+        return DB::transaction(function () use ($fromUserId, $toUserId, $message, $branchId) {
+            $branchColumn = config('ticket-chat.general.branch_column', 'branch_id');
             $existing = Conversation::where('type', ConversationType::DIRECT)
                 ->whereHas('participants', fn ($q) => $q->where('user_id', $fromUserId))
                 ->whereHas('participants', fn ($q) => $q->where('user_id', $toUserId))
+                ->when($branchId !== null, fn ($q) => $q->where($branchColumn, $branchId))
                 ->first();
 
             if ($existing) {
                 return $existing;
             }
 
-            $conversation = Conversation::create([
+            $payload = [
                 'type' => ConversationType::DIRECT,
                 'created_by' => $fromUserId,
-            ]);
+            ];
+            if ($branchId !== null) {
+                $payload[$branchColumn] = $branchId;
+            }
+            $conversation = Conversation::create($payload);
 
             $conversation->participants()->attach([
                 $fromUserId => ['role' => ParticipantRole::MEMBER->value, 'joined_at' => now()],
@@ -82,14 +92,18 @@ class ConversationService implements ConversationServiceInterface
         });
     }
 
-    public function createGroup(string $title, array $userIds, int $createdBy): Conversation
+    public function createGroup(string $title, array $userIds, int $createdBy, ?int $branchId = null): Conversation
     {
-        return DB::transaction(function () use ($title, $userIds, $createdBy) {
-            $conversation = Conversation::create([
+        return DB::transaction(function () use ($title, $userIds, $createdBy, $branchId) {
+            $payload = [
                 'type' => ConversationType::GROUP,
                 'title' => $title,
                 'created_by' => $createdBy,
-            ]);
+            ];
+            if ($branchId !== null) {
+                $payload[config('ticket-chat.general.branch_column', 'branch_id')] = $branchId;
+            }
+            $conversation = Conversation::create($payload);
 
             $conversation->participants()->attach($createdBy, [
                 'role' => ParticipantRole::OWNER->value,
@@ -111,13 +125,17 @@ class ConversationService implements ConversationServiceInterface
         });
     }
 
-    public function createChannel(string $title, int $createdBy): Conversation
+    public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation
     {
-        $conversation = Conversation::create([
+        $payload = [
             'type' => ConversationType::CHANNEL,
             'title' => $title,
             'created_by' => $createdBy,
-        ]);
+        ];
+        if ($branchId !== null) {
+            $payload[config('ticket-chat.general.branch_column', 'branch_id')] = $branchId;
+        }
+        $conversation = Conversation::create($payload);
 
         $conversation->participants()->attach($createdBy, [
             'role' => ParticipantRole::ADMIN->value,
