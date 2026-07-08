@@ -9,17 +9,19 @@
             "email": "info@karnoweb.ir"
         }
     ],
+    "version": "13.0.0",
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^10.0|^11.0|^12.0",
-        "illuminate/database": "^10.0|^11.0|^12.0",
-        "illuminate/broadcasting": "^10.0|^11.0|^12.0",
-        "illuminate/notifications": "^10.0|^11.0|^12.0"
+        "php": "^8.3",
+        "illuminate/support": "^13.0",
+        "illuminate/database": "^13.0",
+        "illuminate/broadcasting": "^13.0",
+        "illuminate/notifications": "^13.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.0|^9.0|^10.0",
-        "pestphp/pest": "^2.0",
-        "phpstan/phpstan": "^1.10",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0",
+        "phpstan/phpstan": "^1.10|^2.0",
         "laravel/pint": "^1.0"
     },
     "autoload": {
@@ -46,5 +48,10 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
 }

@@ -19,13 +19,17 @@ A powerful ticketing and messaging system for Laravel applications.
 
 ## Requirements
 
-- PHP 8.2+
-- Laravel 10.x or 11.x
+- PHP 8.3+
+- Laravel 13.x
 
 ## Installation
 
 ```bash
-composer require karnoweb/laravel-ticket-chat
+# Laravel 13
+composer require karnoweb/laravel-ticket-chat:^13.0
+
+# Laravel 10–12
+composer require karnoweb/laravel-ticket-chat:^2.0
 ```
 
 Run the install command:
