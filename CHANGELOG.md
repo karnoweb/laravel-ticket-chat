@@ -1,5 +1,11 @@
 # Changelog
 
+## [13.1.1] - 2026-10-10
+
+### Fixed
+
+- `Conversation::isLocked()` no longer throws a `TypeError` when `is_locked` is not loaded (freshly created models).
+
 ## [13.1.0] - 2026-10-10
 
 ### Added
