@@ -12,7 +12,7 @@ interface ConversationServiceInterface
 
     public function createGroup(string $title, array $userIds, int $createdBy, ?int $branchId = null): Conversation;
 
-    public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation;
+    public function createChannel(string $title, int $createdBy, ?int $branchId = null, array $memberIds = []): Conversation;
 
     public function close(Conversation $conversation, ?int $closedBy = null): bool;
 

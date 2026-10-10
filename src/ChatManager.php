@@ -31,11 +31,29 @@ class ChatManager
         return $this->conversationService->createGroup($title, $memberIds, $createdBy, $branchId);
     }
 
-    public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation
+    public function createChannel(string $title, int $createdBy, ?int $branchId = null, array $memberIds = []): Conversation
     {
         $branchId = BranchResolver::resolve($branchId);
 
-        return $this->conversationService->createChannel($title, $createdBy, $branchId);
+        return $this->conversationService->createChannel($title, $createdBy, $branchId, $memberIds);
+    }
+
+    public function editMessage(Message $message, string $newBody): bool
+    {
+        return $this->messageService->edit($message, $newBody);
+    }
+
+    /**
+     * Channels the user can subscribe to (not yet an active member).
+     */
+    public function getSubscribableChannels(int $userId, ?int $branchId = null)
+    {
+        $branchId = BranchResolver::resolve($branchId);
+
+        return Conversation::where('type', ConversationType::CHANNEL)
+            ->whereDoesntHave('participants', fn ($q) => $q->where('user_id', $userId)->whereNull('left_at'))
+            ->when($branchId !== null, fn ($q) => $q->byBranch($branchId))
+            ->get();
     }
 
     public function sendMessage(Conversation $conversation, int $userId, string $body, array $options = []): Message

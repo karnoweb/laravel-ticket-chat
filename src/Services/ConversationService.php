@@ -12,6 +12,8 @@ use Karnoweb\TicketChat\Enums\ParticipantRole;
 use Karnoweb\TicketChat\Events\ConversationCreated;
 use Karnoweb\TicketChat\Events\ConversationClosed;
 use Karnoweb\TicketChat\Events\ConversationAssigned;
+use Karnoweb\TicketChat\Events\ParticipantJoined;
+use Karnoweb\TicketChat\Exceptions\InvalidParticipantException;
 use Karnoweb\TicketChat\Exceptions\InvalidStatusTransitionException;
 use Karnoweb\TicketChat\Support\BranchResolver;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +60,10 @@ class ConversationService implements ConversationServiceInterface
 
     public function createDirect(int $fromUserId, int $toUserId, ?string $message = null, ?int $branchId = null): Conversation
     {
+        if ($fromUserId === $toUserId) {
+            throw new InvalidParticipantException('Cannot start a direct conversation with yourself');
+        }
+
         $branchId = BranchResolver::resolve($branchId);
 
         return DB::transaction(function () use ($fromUserId, $toUserId, $message, $branchId) {
@@ -69,6 +75,10 @@ class ConversationService implements ConversationServiceInterface
                 ->first();
 
             if ($existing) {
+                if ($message) {
+                    app(MessageServiceInterface::class)->send($existing, $fromUserId, $message);
+                }
+
                 return $existing;
             }
 
@@ -116,43 +126,66 @@ class ConversationService implements ConversationServiceInterface
                 'joined_at' => now(),
             ]);
 
-            foreach ($userIds as $userId) {
-                if ($userId !== $createdBy) {
-                    $conversation->participants()->attach($userId, [
-                        'role' => ParticipantRole::MEMBER->value,
-                        'joined_at' => now(),
-                    ]);
-                }
+            $memberIds = collect($userIds)->map(fn ($id): int => (int) $id)
+                ->reject(fn (int $id): bool => $id === $createdBy)
+                ->unique();
+
+            foreach ($memberIds as $userId) {
+                $conversation->participants()->attach($userId, [
+                    'role' => ParticipantRole::MEMBER->value,
+                    'joined_at' => now(),
+                ]);
             }
 
             event(new ConversationCreated($conversation));
+
+            foreach ($memberIds as $userId) {
+                event(new ParticipantJoined($conversation, $userId, ParticipantRole::MEMBER->value));
+            }
 
             return $conversation->fresh();
         });
     }
 
-    public function createChannel(string $title, int $createdBy, ?int $branchId = null): Conversation
+    public function createChannel(string $title, int $createdBy, ?int $branchId = null, array $memberIds = []): Conversation
     {
         $branchId = BranchResolver::resolve($branchId);
 
-        $payload = [
-            'type' => ConversationType::CHANNEL,
-            'title' => $title,
-            'created_by' => $createdBy,
-        ];
-        if ($branchId !== null) {
-            $payload[config('ticket-chat.general.branch_column', 'branch_id')] = $branchId;
-        }
-        $conversation = Conversation::create($payload);
+        return DB::transaction(function () use ($title, $createdBy, $branchId, $memberIds) {
+            $payload = [
+                'type' => ConversationType::CHANNEL,
+                'title' => $title,
+                'created_by' => $createdBy,
+            ];
+            if ($branchId !== null) {
+                $payload[config('ticket-chat.general.branch_column', 'branch_id')] = $branchId;
+            }
+            $conversation = Conversation::create($payload);
 
-        $conversation->participants()->attach($createdBy, [
-            'role' => ParticipantRole::ADMIN->value,
-            'joined_at' => now(),
-        ]);
+            $conversation->participants()->attach($createdBy, [
+                'role' => ParticipantRole::ADMIN->value,
+                'joined_at' => now(),
+            ]);
 
-        event(new ConversationCreated($conversation));
+            $members = collect($memberIds)->map(fn ($id): int => (int) $id)
+                ->reject(fn (int $id): bool => $id === $createdBy)
+                ->unique();
 
-        return $conversation->fresh();
+            foreach ($members as $userId) {
+                $conversation->participants()->attach($userId, [
+                    'role' => ParticipantRole::MEMBER->value,
+                    'joined_at' => now(),
+                ]);
+            }
+
+            event(new ConversationCreated($conversation));
+
+            foreach ($members as $userId) {
+                event(new ParticipantJoined($conversation, $userId, ParticipantRole::MEMBER->value));
+            }
+
+            return $conversation->fresh();
+        });
     }
 
     public function close(Conversation $conversation, ?int $closedBy = null): bool
@@ -258,20 +291,36 @@ class ConversationService implements ConversationServiceInterface
 
     public function addParticipant(Conversation $conversation, int $userId, string $role = 'member'): bool
     {
-        if ($conversation->participants()->where('user_id', $userId)->exists()) {
+        $existing = $conversation->participants()->where('user_id', $userId)->first();
+
+        if ($existing && $existing->pivot->left_at === null) {
             return false;
         }
 
-        $conversation->participants()->attach($userId, [
-            'role' => $role,
-            'joined_at' => now(),
-        ]);
+        if ($existing) {
+            $conversation->participants()->updateExistingPivot($userId, [
+                'role' => $role,
+                'joined_at' => now(),
+                'left_at' => null,
+            ]);
+        } else {
+            $conversation->participants()->attach($userId, [
+                'role' => $role,
+                'joined_at' => now(),
+            ]);
+        }
+
+        event(new ParticipantJoined($conversation, $userId, $role));
 
         return true;
     }
 
     public function removeParticipant(Conversation $conversation, int $userId): bool
     {
+        if (! $conversation->participants()->where('user_id', $userId)->exists()) {
+            throw new InvalidParticipantException('User is not a participant of this conversation');
+        }
+
         $conversation->participants()->updateExistingPivot($userId, [
             'left_at' => now(),
         ]);

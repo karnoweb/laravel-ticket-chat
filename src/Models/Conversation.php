@@ -107,7 +107,7 @@ class Conversation extends Model
     public function scopeForUser($query, $userId)
     {
         return $query->whereHas('participants', function ($q) use ($userId) {
-            $q->where('user_id', $userId);
+            $q->where('user_id', $userId)->whereNull('left_at');
         });
     }
 

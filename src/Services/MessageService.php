@@ -7,6 +7,7 @@ use Karnoweb\TicketChat\Models\Conversation;
 use Karnoweb\TicketChat\Models\Message;
 use Karnoweb\TicketChat\Enums\MessageType;
 use Karnoweb\TicketChat\Events\MessageSent;
+use Karnoweb\TicketChat\Events\ConversationRead;
 use Karnoweb\TicketChat\Events\MessageRead;
 use Karnoweb\TicketChat\Exceptions\ConversationLockedException;
 use Karnoweb\TicketChat\Exceptions\MessageEditExpiredException;
@@ -126,7 +127,11 @@ class MessageService implements MessageServiceInterface
             ->get();
 
         foreach ($unreadMessages as $message) {
-            $this->markAsRead($message, $userId);
+            $message->markAsReadBy($userId);
+        }
+
+        if ($unreadMessages->isNotEmpty()) {
+            event(new ConversationRead($conversation, $userId, $unreadMessages->pluck('id')->all()));
         }
     }
 
